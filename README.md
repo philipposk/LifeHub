@@ -2,7 +2,7 @@
 
 > Your day, in one calm place. A local-first personal dashboard that catches every loose end — tasks, notes, photos, voice memos, links, habits, calendar events, emails — and turns them into something searchable, organisable, and actually useful.
 
-**Live:** [LifeHub.6x7.gr](https://LifeHub.6x7.gr) · **Local dev:** [http://localhost:5175](http://localhost:5175)
+**Local dev:** [http://localhost:5175](http://localhost:5175) · *(no public deployment yet)*
 
 ---
 
