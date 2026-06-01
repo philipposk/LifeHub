@@ -1,9 +1,11 @@
 import { NextResponse } from "next/server";
 import { listEntries, categoriesPresent } from "@/lib/vault/reader";
+import { prodGuard } from "@/lib/local-only-guard";
 
 export const runtime = "nodejs";
 
 export async function GET() {
+  const guard = prodGuard("Vault"); if (guard) return guard;
   const cats = await categoriesPresent();
   if (!cats.ok) {
     return NextResponse.json(

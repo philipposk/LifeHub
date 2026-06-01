@@ -1,9 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
+import { prodGuard } from "@/lib/local-only-guard";
 import { searchAssets } from "@/lib/indexer/db";
 
 export const runtime = "nodejs";
 
 export async function GET(req: NextRequest) {
+  const guard = prodGuard("Assets indexer (search)");
+  if (guard) return guard;
   const url = new URL(req.url);
   const q       = url.searchParams.get("q")       || undefined;
   const type    = url.searchParams.get("type")    || undefined;

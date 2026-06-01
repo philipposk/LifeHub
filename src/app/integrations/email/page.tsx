@@ -66,7 +66,7 @@ export default function EmailPage() {
   const saveImap = async () => { await setIMAPConfig({ host: imapHost, port: imapPort, user: imapUser, pass: imapPass, tls: imapTls }); flash("IMAP saved."); };
   const syncImap = async () => {
     const r = await syncIMAP();
-    flash(r ? `Added ${r.added}/${r.total}.` : "IMAP not implemented in LifeHub. Use Triage app.");
+    flash(r ? `Added ${r.added}/${r.total}.` : "IMAP not implemented in LifeHub. Use Postbox app.");
   };
   const toggleAI = async (v: boolean) => { setAI(v); await setAICfg({ enabled: v }); };
 
@@ -114,7 +114,7 @@ export default function EmailPage() {
       </div>
 
       <div className="settings-section">
-        <h3>IMAP <span className="settings-hint" style={{ marginLeft: 8 }}>(stub — full client in Triage app)</span></h3>
+        <h3>IMAP <span className="settings-hint" style={{ marginLeft: 8 }}>(stub — full client in Postbox app)</span></h3>
         <div className="settings-row" style={{ borderTop: "none" }}><label>Host</label><input type="text" value={imapHost} onChange={e => setImapHost(e.target.value)} placeholder="imap.fastmail.com" /></div>
         <div className="settings-row"><label>Port</label><input type="text" value={imapPort} onChange={e => setImapPort(Number(e.target.value) || 993)} /></div>
         <div className="settings-row"><label>User</label><input type="text" value={imapUser} onChange={e => setImapUser(e.target.value)} /></div>

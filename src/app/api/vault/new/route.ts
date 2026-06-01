@@ -1,10 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { writeNewEntry } from "@/lib/vault/writer";
 import { VAULT_TYPES } from "@/lib/vault/schema";
+import { prodGuard } from "@/lib/local-only-guard";
 
 export const runtime = "nodejs";
 
 export async function POST(req: NextRequest) {
+  const guard = prodGuard("Vault"); if (guard) return guard;
   try {
     const body = await req.json();
     if (!VAULT_TYPES.includes(body.type)) {

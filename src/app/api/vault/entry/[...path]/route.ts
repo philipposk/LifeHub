@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { readEntry } from "@/lib/vault/reader";
 import { updateEntry, deleteEntry } from "@/lib/vault/writer";
+import { prodGuard } from "@/lib/local-only-guard";
 
 export const runtime = "nodejs";
 
@@ -9,6 +10,7 @@ function relFrom(params: { path: string[] }): string {
 }
 
 export async function GET(_req: NextRequest, { params }: { params: { path: string[] } }) {
+  const guard = prodGuard("Vault"); if (guard) return guard;
   try {
     const entry = await readEntry(relFrom(params));
     return NextResponse.json(entry);
@@ -18,6 +20,7 @@ export async function GET(_req: NextRequest, { params }: { params: { path: strin
 }
 
 export async function PUT(req: NextRequest, { params }: { params: { path: string[] } }) {
+  const guard = prodGuard("Vault"); if (guard) return guard;
   try {
     const body = await req.json();
     const entry = await updateEntry(relFrom(params), {
@@ -31,6 +34,7 @@ export async function PUT(req: NextRequest, { params }: { params: { path: string
 }
 
 export async function DELETE(_req: NextRequest, { params }: { params: { path: string[] } }) {
+  const guard = prodGuard("Vault"); if (guard) return guard;
   try {
     await deleteEntry(relFrom(params));
     return NextResponse.json({ ok: true });
