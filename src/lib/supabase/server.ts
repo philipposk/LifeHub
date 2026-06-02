@@ -1,14 +1,15 @@
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
+import { sharedCookieOptions } from "./cookies";
 
 export function createClient() {
   const cookieStore = cookies();
-  const isProd = process.env.NODE_ENV === "production";
 
   return createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
+      cookieOptions: sharedCookieOptions,
       cookies: {
         getAll() {
           return cookieStore.getAll();
@@ -23,9 +24,6 @@ export function createClient() {
           }
         },
       },
-      cookieOptions: isProd
-        ? { domain: ".6x7.gr", sameSite: "lax", secure: true, path: "/" }
-        : {},
     }
   );
 }
