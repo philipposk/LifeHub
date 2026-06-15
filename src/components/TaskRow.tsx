@@ -6,9 +6,16 @@ import { IconCheck } from "./icons";
 export function TaskRow({ t }: { t: TaskModel }) {
   return (
     <div className={"task" + (t.done ? " done" : "")}>
-      <div className={"check" + (t.done ? " done" : "")} onClick={() => toggleTask(t.id)}>
+      <button
+        type="button"
+        role="checkbox"
+        aria-checked={t.done}
+        aria-label={(t.done ? "Mark incomplete: " : "Mark complete: ") + t.text}
+        className={"check" + (t.done ? " done" : "")}
+        onClick={() => toggleTask(t.id)}
+      >
         <IconCheck />
-      </div>
+      </button>
       <div className="task-text">{t.text}</div>
       <div className="task-meta">
         {t.chipLabel && <span className={"chip " + (t.chipCls || "")}>{t.chipLabel}</span>}

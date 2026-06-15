@@ -135,6 +135,21 @@ export default function AssetsPage() {
   );
 }
 
+// FTS5 wraps matches in control-char sentinels (char(2)/char(3) — see indexer/db.ts).
+// Escape ALL file-sourced content first (so a scanned file containing <script> or
+// onerror= can't execute — stored XSS), then turn only our own sentinels into <mark>.
+const MARK_START = new RegExp(String.fromCharCode(2), "g");
+const MARK_END = new RegExp(String.fromCharCode(3), "g");
+function safeSnippetHTML(raw: string): string {
+  const escaped = raw
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;");
+  return escaped
+    .replace(MARK_START, "<mark>")
+    .replace(MARK_END, "</mark>");
+}
+
 function AssetCard({ hit }: { hit: Hit }) {
   const isVault = hit.source === "vault";
   const href = isVault && hit.vault_path
@@ -143,7 +158,7 @@ function AssetCard({ hit }: { hit: Hit }) {
   const body = (
     <>
       <h4>{hit.title || hit.id}</h4>
-      <div className="body" style={{ whiteSpace: "pre-wrap" }} dangerouslySetInnerHTML={{ __html: hit.snippet || (hit.preview || "") }} />
+      <div className="body" style={{ whiteSpace: "pre-wrap" }} dangerouslySetInnerHTML={{ __html: safeSnippetHTML(hit.snippet || hit.preview || "") }} />
       <div className="foot" style={{ flexWrap: "wrap" }}>
         <span className="pin" style={{ background: typeColor(hit.type), color: "white" }}>{hit.type}</span>
         {hit.project && <span>{hit.project}</span>}

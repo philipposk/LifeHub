@@ -1,6 +1,7 @@
 "use client";
 import { useLiveQuery } from "dexie-react-hooks";
 import { db, LOCAL_USER_ID, uid, TaskRow, NoteRow, HabitRow, HabitLogRow, EventRow, CaptureRow, AreaRow } from "./schema";
+import { localDateKey } from "../date";
 
 export type SyncOp = "upsert" | "delete";
 
@@ -69,11 +70,12 @@ export function useStreak() {
       byDate[l.date] = byDate[l.date] || {};
       byDate[l.date][l.habitId] = l.value;
     }
-    // walk back from today; a "kept" day = any habit logged >0 that day
+    // walk back from today; a "kept" day = any habit logged >0 that day.
+    // Key by LOCAL day (see lib/date.ts) so the streak matches the wall clock.
     let streak = 0;
     const d = new Date();
     for (let i = 0; i < 365; i++) {
-      const key = d.toISOString().slice(0, 10);
+      const key = localDateKey(d);
       const day = byDate[key] || {};
       const ok = Object.values(day).some(v => v > 0);
       if (ok) streak++; else break;
@@ -173,6 +175,19 @@ export async function addNote(title: string, body: string, tag?: string) {
   };
   await db().notes.add(row);
   await enqueue("notes", row.id, "upsert", row);
+}
+
+export async function updateNote(id: string, patch: { title?: string; body?: string; tag?: string; pinned?: boolean }) {
+  const existing = await db().notes.get(id);
+  if (!existing) return;
+  const next = { ...existing, ...patch, updatedAt: Date.now(), syncState: "pending" as const };
+  await db().notes.update(id, next);
+  await enqueue("notes", id, "upsert", next);
+}
+
+export async function deleteNote(id: string) {
+  await db().notes.delete(id);
+  await enqueue("notes", id, "delete", { id });
 }
 
 export async function addCapture(body: string, kind: CaptureRow["kind"] = "text", tags: string[] = []) {

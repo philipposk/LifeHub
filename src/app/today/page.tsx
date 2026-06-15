@@ -4,7 +4,8 @@ import { pollAIOSWorkflow } from "@/lib/integrations/aios";
 import { summarizeUnreadDigest } from "@/lib/integrations/email";
 import { useLiveQuery } from "dexie-react-hooks";
 import { db, LOCAL_USER_ID } from "@/lib/db/schema";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { localDateKey } from "@/lib/date";
 import { TaskRow } from "@/components/TaskRow";
 import { HabitRow } from "@/components/HabitRow";
 import { QuickCapture } from "@/components/QuickCapture";
@@ -37,7 +38,15 @@ export default function TodayPage() {
   const rest = tasks.filter(t => !t.focus);
   const done = tasks.filter(t => t.done).length;
   const runningRuns = agentRuns.filter(r => r.status === "running");
-  const featuredMCP = mcpCatalog[Math.floor(Math.random() * mcpCatalog.length)];
+  // Deterministic "MCP pick of the day": stable within a calendar day and
+  // across re-renders (Math.random() in render flickered on every live update).
+  const featuredMCP = useMemo(() => {
+    if (mcpCatalog.length === 0) return undefined;
+    const key = localDateKey();
+    let h = 0;
+    for (let i = 0; i < key.length; i++) h = (h * 31 + key.charCodeAt(i)) | 0;
+    return mcpCatalog[Math.abs(h) % mcpCatalog.length];
+  }, [mcpCatalog]);
 
   useEffect(() => {
     if (runningRuns.length === 0) return;

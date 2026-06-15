@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { ensureSeeded } from "@/lib/db/seed";
 import { startSyncLoop } from "@/lib/sync/adapter";
 import { Sidebar } from "./Sidebar";
@@ -16,8 +16,13 @@ const isEditable = (t: EventTarget | null): boolean => {
 
 export function Shell({ children }: { children: React.ReactNode }) {
   const router = useRouter();
+  const pathname = usePathname();
   const [ready, setReady] = useState(false);
   const [paletteOpen, setPaletteOpen] = useState(false);
+  const [navOpen, setNavOpen] = useState(false);
+
+  // Close the mobile drawer whenever the route changes.
+  useEffect(() => { setNavOpen(false); }, [pathname]);
 
   useEffect(() => {
     ensureSeeded()
@@ -56,10 +61,11 @@ export function Shell({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <div className="app">
+    <div className={"app" + (navOpen ? " nav-open" : "")}>
       <Sidebar />
+      {navOpen && <div className="nav-backdrop" onClick={() => setNavOpen(false)} />}
       <div className="main">
-        <Topbar onOpenSearch={() => setPaletteOpen(true)} />
+        <Topbar onOpenSearch={() => setPaletteOpen(true)} onToggleNav={() => setNavOpen(o => !o)} />
         <div className="content">{children}</div>
       </div>
       <TweaksPanel />

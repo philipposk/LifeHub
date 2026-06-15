@@ -19,14 +19,16 @@ export function CommandPalette({ open, onClose }: { open: boolean; onClose: () =
 
   useEffect(() => {
     let cancelled = false;
-    (async () => {
+    // Debounce: searchAll loads the whole local DB and rebuilds the Fuse index,
+    // so don't fire on every keystroke.
+    const handle = setTimeout(async () => {
       const r = await searchAll(q);
       if (!cancelled) {
         setResults(r);
         setActive(0);
       }
-    })();
-    return () => { cancelled = true; };
+    }, 120);
+    return () => { cancelled = true; clearTimeout(handle); };
   }, [q]);
 
   if (!open) return null;

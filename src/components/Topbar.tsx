@@ -1,6 +1,6 @@
 "use client";
 import { usePathname, useRouter } from "next/navigation";
-import { IconChevron, IconSearch, IconBell, IconCamera } from "./icons";
+import { IconChevron, IconSearch, IconBell, IconCamera, IconMenu } from "./icons";
 
 const TITLES: Record<string, string> = {
   "/today": "Today", "/tasks": "Tasks", "/calendar": "Calendar", "/notes": "Notes",
@@ -8,12 +8,15 @@ const TITLES: Record<string, string> = {
   "/settings": "Settings",
 };
 
-export function Topbar({ onOpenSearch }: { onOpenSearch: () => void }) {
+export function Topbar({ onOpenSearch, onToggleNav }: { onOpenSearch: () => void; onToggleNav?: () => void }) {
   const pathname = usePathname();
   const router = useRouter();
   const title = TITLES[pathname] || "LifeHub";
   return (
     <div className="topbar">
+      <button className="icon-btn nav-toggle" title="Menu" aria-label="Open navigation" onClick={onToggleNav}>
+        <IconMenu />
+      </button>
       <div className="crumbs">
         <span>Workspace</span>
         <IconChevron />
