@@ -7,6 +7,7 @@ import { Sidebar } from "./Sidebar";
 import { Topbar } from "./Topbar";
 import { TweaksPanel } from "./TweaksPanel";
 import { CommandPalette } from "./CommandPalette";
+import { ToastProvider } from "./Toast";
 
 const isEditable = (t: EventTarget | null): boolean => {
   if (!(t instanceof HTMLElement)) return false;
@@ -61,15 +62,17 @@ export function Shell({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <div className={"app" + (navOpen ? " nav-open" : "")}>
-      <Sidebar />
-      {navOpen && <div className="nav-backdrop" onClick={() => setNavOpen(false)} />}
-      <div className="main">
-        <Topbar onOpenSearch={() => setPaletteOpen(true)} onToggleNav={() => setNavOpen(o => !o)} />
-        <div className="content">{children}</div>
+    <ToastProvider>
+      <div className={"app" + (navOpen ? " nav-open" : "")}>
+        <Sidebar />
+        {navOpen && <div className="nav-backdrop" onClick={() => setNavOpen(false)} />}
+        <div className="main">
+          <Topbar onOpenSearch={() => setPaletteOpen(true)} onToggleNav={() => setNavOpen(o => !o)} />
+          <div className="content">{children}</div>
+        </div>
+        <TweaksPanel />
+        <CommandPalette open={paletteOpen} onClose={() => setPaletteOpen(false)} />
       </div>
-      <TweaksPanel />
-      <CommandPalette open={paletteOpen} onClose={() => setPaletteOpen(false)} />
-    </div>
+    </ToastProvider>
   );
 }
