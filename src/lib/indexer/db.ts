@@ -158,7 +158,7 @@ export function searchAssets(opts: SearchOpts): SearchHit[] {
     if (opts.tag)     { filters.push("a.tags LIKE @tag");     params.tag = `%"${opts.tag}"%`; }
     const where = filters.length ? `AND ${filters.join(" AND ")}` : "";
     const rows = db.prepare(`
-      SELECT a.*, snippet(assets_fts, 1, '<b>', '</b>', '…', 12) AS snippet, rank
+      SELECT a.*, snippet(assets_fts, 1, char(2), char(3), '…', 12) AS snippet, rank
       FROM assets_fts
       JOIN assets a ON a.id = assets_fts.id
       WHERE assets_fts MATCH @q ${where}

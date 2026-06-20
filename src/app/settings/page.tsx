@@ -31,6 +31,7 @@ export default function SettingsPage() {
   const [abDir, setAbDir] = useState("");
   const [icsText, setIcsText] = useState("");
   const [msg, setMsg] = useState("");
+  const [tab, setTab] = useState<"general" | "calendar" | "integrations" | "advanced">("general");
 
   useEffect(() => { if (supa) { setUrl(supa.url || ""); setKey(supa.anonKey || ""); } }, [supa?.url, supa?.anonKey]);
   useEffect(() => { if (openai?.key) setOaKey(openai.key); }, [openai?.key]);
@@ -81,6 +82,18 @@ export default function SettingsPage() {
         </div>
       </div>
 
+      <div className="filter-bar" style={{ display: "inline-flex", marginBottom: 22, flexWrap: "wrap" }}>
+        {([
+          ["general", "General"],
+          ["calendar", "Calendar"],
+          ["integrations", "Integrations"],
+          ["advanced", "Advanced"],
+        ] as const).map(([k, l]) => (
+          <button key={k} className={tab === k ? "on" : ""} onClick={() => setTab(k)}>{l}</button>
+        ))}
+      </div>
+
+      {tab === "general" && <>
       <div className="settings-section">
         <h3>Appearance</h3>
         <div className="settings-row">
@@ -116,7 +129,9 @@ export default function SettingsPage() {
         <div className="settings-row" style={{ borderTop: "none" }}><label>OpenAI API key</label><input type="password" value={oaKey} onChange={e => setOaKey(e.target.value)} placeholder="sk-..." /></div>
         <div className="settings-row" style={{ borderTop: "none" }}><button className="btn-primary" onClick={saveOpenAI} disabled={!oaKey}>Save</button></div>
       </div>
+      </>}
 
+      {tab === "calendar" && <>
       <div className="settings-section">
         <h3>Calendar import (.ics)</h3>
         <div className="settings-row" style={{ borderTop: "none" }}>
@@ -129,7 +144,9 @@ export default function SettingsPage() {
         </div>
         <div className="settings-row" style={{ borderTop: "none" }}><button className="btn-primary" onClick={importICS} disabled={!icsText.trim()}>Import paste</button></div>
       </div>
+      </>}
 
+      {tab === "integrations" && <>
       <div className="settings-section">
         <h3>AI OS</h3>
         <div className="settings-row" style={{ borderTop: "none" }}><label>Base URL</label><input type="text" value={aiosUrl} onChange={e => setAiosUrl(e.target.value)} placeholder="http://localhost:8080" /></div>
@@ -156,13 +173,16 @@ export default function SettingsPage() {
         <div className="settings-row" style={{ borderTop: "none" }}><label>Data dir</label><input type="text" value={abDir} onChange={e => setAbDir(e.target.value)} placeholder="/Users/you/Devoloper Projects/AppBlueprints/data/mcps" /></div>
         <div className="settings-row" style={{ borderTop: "none" }}><button className="btn-primary" onClick={saveAB} disabled={!abDir}>Save + load</button></div>
       </div>
+      </>}
 
-      {msg && <div style={{ position: "fixed", bottom: 20, left: 20, background: "var(--ink)", color: "var(--bg)", padding: "8px 12px", borderRadius: 8, fontSize: 12, maxWidth: 480 }}>{msg}</div>}
-
+      {tab === "advanced" && <>
       <div className="settings-section">
         <h3>Danger zone</h3>
         <div className="settings-row" style={{ borderTop: "none" }}><label>Wipe local data</label><button className="tool-btn" onClick={resetData}>Reset everything</button></div>
       </div>
+      </>}
+
+      {msg && <div style={{ position: "fixed", bottom: 20, left: 20, background: "var(--ink)", color: "var(--bg)", padding: "8px 12px", borderRadius: 8, fontSize: 12, maxWidth: 480 }}>{msg}</div>}
     </>
   );
 }

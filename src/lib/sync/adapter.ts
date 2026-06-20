@@ -15,6 +15,14 @@ async function recordLastFlush(result: FlushResult) {
   await db().settings.put({ key: "syncStatus", value: { ...result, at: Date.now() } });
 }
 
+// Rows that fail MAX_ATTEMPTS times are parked here (capped) instead of being
+// dropped silently, so they're recoverable/inspectable from Settings.
+async function deadLetter(row: SyncQueueRow, error: string) {
+  const cur = ((await db().settings.get("syncDeadLetter"))?.value as any[]) || [];
+  cur.push({ table: row.table, recordId: row.recordId, payload: row.payload, error, at: Date.now() });
+  await db().settings.put({ key: "syncDeadLetter", value: cur.slice(-100) });
+}
+
 export async function flushSyncQueue(): Promise<FlushResult> {
   const client = await getSupabase();
   if (!client) {
@@ -41,7 +49,23 @@ export async function flushSyncQueue(): Promise<FlushResult> {
   }
 
   if (upserts.length > 0) {
-    const rows = upserts.map(u => ({
+    // Dedup by recordId. Editing the same task 5x enqueues 5 rows with the same
+    // recordId; sending them all in one upsert makes Postgres reject the whole
+    // batch ("ON CONFLICT cannot affect row a second time"), so it never flushed
+    // and was eventually dropped. Keep only the LATEST payload per recordId and
+    // delete the superseded queue rows alongside it.
+    const winnerByRecord = new Map<string, SyncQueueRow>();
+    const queueIdsByRecord = new Map<string, string[]>();
+    for (const u of upserts) {
+      const ids = queueIdsByRecord.get(u.recordId) || [];
+      ids.push(u.id);
+      queueIdsByRecord.set(u.recordId, ids);
+      const cur = winnerByRecord.get(u.recordId);
+      if (!cur || u.createdAt >= cur.createdAt) winnerByRecord.set(u.recordId, u);
+    }
+
+    const winners = Array.from(winnerByRecord.values());
+    const rows = winners.map(u => ({
       id: u.recordId,
       user_id: u.payload?.userId ?? "local-guest",
       table_name: u.table,
@@ -51,18 +75,23 @@ export async function flushSyncQueue(): Promise<FlushResult> {
     const { error } = await client.from(TABLE).upsert(rows, { onConflict: "id" });
     if (error) {
       lastError = error.message;
-      // bump attempts
-      for (const u of upserts) {
+      // bump attempts on the winner row only (it represents the record); drop to
+      // a dead-letter after MAX_ATTEMPTS instead of losing data silently.
+      for (const u of winners) {
         const next = u.attempts + 1;
         if (next >= MAX_ATTEMPTS) {
-          await db().syncQueue.delete(u.id);
+          await deadLetter(u, error.message);
+          for (const id of queueIdsByRecord.get(u.recordId) || []) await db().syncQueue.delete(id);
         } else {
           await db().syncQueue.update(u.id, { attempts: next });
         }
       }
     } else {
-      for (const u of upserts) await db().syncQueue.delete(u.id);
-      flushed += upserts.length;
+      // success → clear every queue row for each flushed record (winner + superseded)
+      for (const ids of queueIdsByRecord.values()) {
+        for (const id of ids) await db().syncQueue.delete(id);
+      }
+      flushed += winners.length;
     }
   }
 
@@ -71,7 +100,7 @@ export async function flushSyncQueue(): Promise<FlushResult> {
     if (error) {
       lastError = error.message;
       const next = d.attempts + 1;
-      if (next >= MAX_ATTEMPTS) await db().syncQueue.delete(d.id);
+      if (next >= MAX_ATTEMPTS) { await deadLetter(d, error.message); await db().syncQueue.delete(d.id); }
       else await db().syncQueue.update(d.id, { attempts: next });
     } else {
       await db().syncQueue.delete(d.id);

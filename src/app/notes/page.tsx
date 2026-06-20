@@ -1,20 +1,28 @@
 "use client";
 import { useState } from "react";
-import { useNotes, addNote } from "@/lib/db/hooks";
+import { useNotes } from "@/lib/db/hooks";
+import { NoteEditor, NoteDraft } from "@/components/NoteEditor";
+import { NoteRow } from "@/lib/db/schema";
 import { IconFilter, IconPlus } from "@/components/icons";
+
+type SortMode = "recent" | "pinned" | "alpha";
 
 export default function NotesPage() {
   const [tag, setTag] = useState("all");
+  const [sort, setSort] = useState<SortMode>("recent");
+  const [editing, setEditing] = useState<NoteDraft | null>(null);
   const notes = useNotes() || [];
-  const filtered = tag === "all" ? notes : notes.filter(n => n.tag === tag);
-  const tags = ["all", ...Array.from(new Set(notes.map(n => n.tag).filter(Boolean) as string[]))];
 
-  const onNew = async () => {
-    const title = prompt("Note title");
-    if (!title) return;
-    const body = prompt("Body (optional)") || "";
-    await addNote(title, body);
-  };
+  const filtered = (tag === "all" ? notes : notes.filter(n => n.tag === tag)).slice();
+  filtered.sort((a, b) => {
+    if (sort === "pinned") return Number(b.pinned) - Number(a.pinned) || b.updatedAt - a.updatedAt;
+    if (sort === "alpha")  return (a.title || "").localeCompare(b.title || "");
+    return b.updatedAt - a.updatedAt;
+  });
+
+  const tags = ["all", ...Array.from(new Set(notes.map(n => n.tag).filter(Boolean) as string[]))];
+  const cycleSort = () => setSort(s => (s === "recent" ? "pinned" : s === "pinned" ? "alpha" : "recent"));
+  const sortLabel = sort === "recent" ? "recent" : sort === "pinned" ? "pinned" : "A–Z";
 
   return (
     <>
@@ -24,12 +32,12 @@ export default function NotesPage() {
           <div className="view-sub">{notes.length} notes · {notes.filter(n => n.pinned).length} pinned</div>
         </div>
         <div style={{ display: "flex", gap: 12 }}>
-          <button className="tool-btn"><IconFilter /> Sort: recent</button>
-          <button className="btn-primary" onClick={onNew}><IconPlus /> New note</button>
+          <button className="tool-btn" onClick={cycleSort}><IconFilter /> Sort: {sortLabel}</button>
+          <button className="btn-primary" onClick={() => setEditing({})}><IconPlus /> New note</button>
         </div>
       </div>
 
-      <div className="filter-bar" style={{ display: "inline-flex", marginBottom: 22 }}>
+      <div className="filter-bar" style={{ display: "inline-flex", marginBottom: 22, flexWrap: "wrap" }}>
         {tags.map(t => (
           <button key={t} className={tag === t ? "on" : ""} onClick={() => setTag(t)}>
             {t === "all" ? "All" : "#" + t}
@@ -44,8 +52,15 @@ export default function NotesPage() {
       )}
 
       <div className="notes-grid">
-        {filtered.map(n => (
-          <div key={n.id} className={"note-tile" + (n.pinned ? " pinned" : "")}>
+        {filtered.map((n: NoteRow) => (
+          <button
+            key={n.id}
+            type="button"
+            className={"note-tile" + (n.pinned ? " pinned" : "")}
+            style={{ textAlign: "left", cursor: "pointer", font: "inherit" }}
+            onClick={() => setEditing(n)}
+            aria-label={`Edit note: ${n.title}`}
+          >
             <h4 className={n.serif ? "serif" : ""}>{n.title}</h4>
             <div className="body">{n.body}</div>
             <div className="foot">
@@ -54,9 +69,11 @@ export default function NotesPage() {
               <span>·</span>
               <span>{n.time || new Date(n.updatedAt).toLocaleDateString()}</span>
             </div>
-          </div>
+          </button>
         ))}
       </div>
+
+      <NoteEditor note={editing} onClose={() => setEditing(null)} />
     </>
   );
 }

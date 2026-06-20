@@ -59,6 +59,9 @@ function CaptureCard({ c }: { c: CaptureRow }) {
       </div>
       <div style={{ minWidth: 0 }}>
         <div style={{ fontSize: 13.5, color: "var(--ink)" }}>{c.body || "(no body)"}</div>
+        {c.kind === "file" && url && (
+          <a href={url} download className="tool-btn" style={{ marginTop: 6, display: "inline-flex" }}>Download</a>
+        )}
         {c.ocrText && c.ocrText !== c.body && (
           <details style={{ marginTop: 6 }}>
             <summary style={{ fontSize: 11, color: "var(--muted)", cursor: "pointer" }}>OCR text ({c.ocrText.length} chars)</summary>

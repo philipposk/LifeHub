@@ -3,7 +3,7 @@ import { useRef, useState } from "react";
 import { db, uid, LOCAL_USER_ID } from "@/lib/db/schema";
 import { addCapture, addTask, addNote } from "@/lib/db/hooks";
 import { classify } from "@/lib/capture/classify";
-import { ingestPhoto } from "@/lib/capture/ocr";
+import { ingestPhoto, ingestFile } from "@/lib/capture/ocr";
 import { startRecording, ingestVoice, VoiceSession } from "@/lib/capture/voice";
 import { startAIOSWorkflow } from "@/lib/integrations/aios";
 import { createAppMakerApp } from "@/lib/integrations/appmaker";
@@ -14,8 +14,26 @@ export function QuickCapture() {
   const [saving, setSaving] = useState(false);
   const [status, setStatus] = useState<string>("");
   const fileRef = useRef<HTMLInputElement>(null);
+  const attachRef = useRef<HTMLInputElement>(null);
   const voiceRef = useRef<VoiceSession | null>(null);
   const [recording, setRecording] = useState(false);
+
+  const onAttach = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const f = e.target.files?.[0];
+    e.target.value = "";
+    if (!f) return;
+    setSaving(true);
+    setStatus("Attaching…");
+    try {
+      await ingestFile(f);
+      setStatus("Attached " + f.name);
+    } catch (err: any) {
+      setStatus("Attach failed: " + (err?.message || "unknown"));
+    } finally {
+      setSaving(false);
+      setTimeout(() => setStatus(""), 2500);
+    }
+  };
 
   const submit = async () => {
     const v = text.trim();
@@ -187,7 +205,8 @@ export function QuickCapture() {
           <button className={"tool-btn" + (recording ? " on" : "")} onClick={toggleVoice} title="Voice memo">
             <IconMic /> {recording ? "Stop" : "Voice"}
           </button>
-          <button className="tool-btn" title="File (coming)"><IconPaperclip /> File</button>
+          <button className="tool-btn" onClick={() => attachRef.current?.click()} title="Attach a file"><IconPaperclip /> File</button>
+          <input ref={attachRef} type="file" hidden onChange={onAttach} />
           <button className="tool-btn" title="Use #tag in text"><IconHash /> Tag</button>
         </div>
         <button className="btn-primary" onClick={submit} disabled={saving || !text.trim()}>

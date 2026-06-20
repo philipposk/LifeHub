@@ -1,4 +1,5 @@
 import { db, LOCAL_USER_ID, uid } from "./schema";
+import { localDateKey } from "../date";
 
 const now = () => Date.now();
 
@@ -123,7 +124,7 @@ export async function ensureSeeded() {
         for (let i = 0; i < h.cells.length; i++) {
           const dt = new Date(today);
           dt.setDate(today.getDate() - (h.cells.length - 1 - i));
-          const dateStr = dt.toISOString().slice(0, 10);
+          const dateStr = localDateKey(dt);
           await d.habitLogs.put({
             id: uid(),
             habitId,

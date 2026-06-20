@@ -2,8 +2,10 @@ import { NextRequest, NextResponse } from "next/server";
 import { promises as fs } from "fs";
 import path from "path";
 import os from "os";
+import { prodGuard } from "@/lib/local-only-guard";
 
 export const dynamic = "force-dynamic";
+export const runtime = "nodejs";
 
 const DEFAULT_DIR = process.env.APPBLUEPRINTS_DATA_DIR
   || path.join(os.homedir(), "Devoloper Projects", "AppBlueprints", "data", "mcps");
@@ -34,10 +36,19 @@ function safeParse(text: string, file: string) {
 }
 
 export async function GET(req: NextRequest) {
+  const guard = prodGuard("AppBlueprints MCP catalog");
+  if (guard) return guard;
+
   const dir = req.nextUrl.searchParams.get("dir") || DEFAULT_DIR;
   const abs = path.resolve(dir);
   if (!abs.startsWith("/")) {
     return NextResponse.json({ error: "must be absolute path" }, { status: 400 });
+  }
+  // Confine reads to the user's home subtree (where AppBlueprints lives) so an
+  // exposed dev server can't be used to read /etc, /var, or other users' files.
+  const home = os.homedir();
+  if (abs !== home && !abs.startsWith(home + path.sep)) {
+    return NextResponse.json({ error: "dir must be under your home directory" }, { status: 400 });
   }
   const files = await listJsonFiles(abs);
   const entries: any[] = [];

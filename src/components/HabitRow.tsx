@@ -2,19 +2,15 @@
 import { HABIT_ICON, IconCheck } from "./icons";
 import { HabitRow as HabitModel, HabitLogRow } from "@/lib/db/schema";
 import { logHabitCell } from "@/lib/db/hooks";
+import { localDateKey, localDateKeyDaysAgo } from "@/lib/date";
 
-const todayStr = () => new Date().toISOString().slice(0, 10);
-const dateNDaysAgo = (n: number) => {
-  const d = new Date();
-  d.setDate(d.getDate() - n);
-  return d.toISOString().slice(0, 10);
-};
+const LEVEL_LABEL = ["none", "light", "good", "full"];
 
 export function HabitRow({ habit, logs }: { habit: HabitModel; logs: HabitLogRow[] }) {
   const Icon = HABIT_ICON[habit.icon] || IconCheck;
-  const today = todayStr();
-  // 9-day strip ending today
-  const dates = Array.from({ length: 9 }, (_, i) => dateNDaysAgo(8 - i));
+  const today = localDateKey();
+  // 9-day strip ending today, keyed by LOCAL day (see lib/date.ts)
+  const dates = Array.from({ length: 9 }, (_, i) => localDateKeyDaysAgo(8 - i));
   const logByDate = Object.fromEntries(logs.map(l => [l.date, l.value]));
 
   const cycle = async (date: string) => {
@@ -33,10 +29,12 @@ export function HabitRow({ habit, logs }: { habit: HabitModel; logs: HabitLogRow
         {dates.map((d) => {
           const v = (logByDate[d] ?? 0) as number;
           return (
-            <div
+            <button
+              type="button"
               key={d}
               className={"habit-cell" + (v ? " f" + v : "") + (d === today ? " today" : "")}
-              title={d}
+              title={`${d} — ${LEVEL_LABEL[v]} (click to change)`}
+              aria-label={`${habit.name} on ${d}: ${LEVEL_LABEL[v]}. Activate to cycle.`}
               onClick={() => cycle(d)}
             />
           );
