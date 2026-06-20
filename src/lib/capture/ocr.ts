@@ -13,6 +13,22 @@ export async function getBlobUrl(blobRef: string): Promise<string | null> {
   return URL.createObjectURL(row.blob);
 }
 
+/** Attach any file as a capture (no OCR) — stores the blob + filename/size. */
+export async function ingestFile(file: File) {
+  const blobRef = await saveBlob(file);
+  const kb = Math.max(1, Math.round(file.size / 1024));
+  await db().captures.add({
+    id: uid(),
+    userId: LOCAL_USER_ID,
+    kind: "file",
+    body: `${file.name} · ${kb} KB`,
+    blobRef,
+    tags: ["file"],
+    processed: false,
+    createdAt: Date.now(),
+  });
+}
+
 export async function ocrPhoto(blob: Blob, onProgress?: (p: number) => void): Promise<string> {
   // Lazy-load tesseract.js — keeps initial bundle small.
   const { createWorker } = await import("tesseract.js");

@@ -7,6 +7,7 @@ import { Sidebar } from "./Sidebar";
 import { Topbar } from "./Topbar";
 import { TweaksPanel } from "./TweaksPanel";
 import { CommandPalette } from "./CommandPalette";
+import { ShortcutsHelp } from "./ShortcutsHelp";
 import { ToastProvider } from "./Toast";
 
 const isEditable = (t: EventTarget | null): boolean => {
@@ -21,6 +22,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
   const [ready, setReady] = useState(false);
   const [paletteOpen, setPaletteOpen] = useState(false);
   const [navOpen, setNavOpen] = useState(false);
+  const [helpOpen, setHelpOpen] = useState(false);
 
   // Close the mobile drawer whenever the route changes.
   useEffect(() => { setNavOpen(false); }, [pathname]);
@@ -41,12 +43,16 @@ export function Shell({ children }: { children: React.ReactNode }) {
         setPaletteOpen(o => !o);
       } else if (e.key === "Escape") {
         setPaletteOpen(false);
+        setHelpOpen(false);
       } else if (e.key.toLowerCase() === "n" && !e.metaKey && !e.ctrlKey && !e.altKey && !isEditable(e.target)) {
         e.preventDefault();
         router.push("/tasks");
       } else if (e.key === "/" && !isEditable(e.target)) {
         e.preventDefault();
         setPaletteOpen(true);
+      } else if (e.key === "?" && !isEditable(e.target)) {
+        e.preventDefault();
+        setHelpOpen(h => !h);
       }
     };
     window.addEventListener("keydown", onKey);
@@ -72,6 +78,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
         </div>
         <TweaksPanel />
         <CommandPalette open={paletteOpen} onClose={() => setPaletteOpen(false)} />
+        <ShortcutsHelp open={helpOpen} onClose={() => setHelpOpen(false)} />
       </div>
     </ToastProvider>
   );

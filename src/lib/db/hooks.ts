@@ -143,6 +143,19 @@ export async function toggleTask(id: string) {
   await enqueue("tasks", id, "upsert", { ...t, ...patch });
 }
 
+export async function updateTask(id: string, patch: Partial<Pick<TaskRow, "text" | "section" | "due" | "focus" | "chipCls" | "chipLabel" | "urgent">>) {
+  const existing = await db().tasks.get(id);
+  if (!existing) return;
+  const next = { ...existing, ...patch, updatedAt: Date.now(), syncState: "pending" as const };
+  await db().tasks.update(id, next);
+  await enqueue("tasks", id, "upsert", next);
+}
+
+export async function deleteTask(id: string) {
+  await db().tasks.delete(id);
+  await enqueue("tasks", id, "delete", { id });
+}
+
 export async function addTask(text: string, section: string = "today", chipCls?: string, chipLabel?: string) {
   const row: TaskRow = {
     id: uid(),

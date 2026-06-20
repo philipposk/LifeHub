@@ -854,6 +854,73 @@ body {
 .settings-row input:focus { border-color: var(--accent); }
 .settings-hint { font-size: 11.5px; color: var(--muted); margin-top: 4px; }
 
+/* ── Shortcuts help ──────────────────────────────────────────────── */
+.shortcuts {
+  width: 440px; max-width: 92vw;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  box-shadow: 0 20px 60px rgba(0,0,0,.22);
+  overflow: hidden;
+}
+.shortcuts-hd {
+  font-family: "Instrument Serif", serif; font-size: 22px;
+  padding: 16px 20px 8px; color: var(--ink);
+}
+.shortcuts-list { padding: 4px 12px 8px; }
+.shortcuts-row {
+  display: flex; align-items: center; gap: 14px;
+  padding: 7px 8px; font-size: 13px; color: var(--ink-2);
+}
+.shortcuts-row .kbd { min-width: 52px; text-align: center; }
+.shortcuts-foot {
+  padding: 10px 20px; border-top: 1px solid var(--line-2);
+  font-size: 11.5px; color: var(--muted); background: var(--bg-2);
+}
+
+/* ── Task inline edit + actions menu ─────────────────────────────── */
+.task-edit {
+  flex: 1; min-width: 0;
+  font: inherit; font-size: 13.5px; color: var(--ink);
+  background: var(--bg-2);
+  border: 1px solid var(--accent);
+  border-radius: 6px;
+  padding: 3px 8px; outline: none;
+}
+.task-actions { position: relative; }
+.task-menu-btn {
+  appearance: none; border: none; background: transparent;
+  color: var(--muted); cursor: pointer;
+  width: 22px; height: 22px; border-radius: 6px;
+  font-size: 15px; line-height: 1;
+  opacity: 0; transition: opacity .12s, background .12s;
+}
+.task:hover .task-menu-btn { opacity: 1; }
+.task-menu-btn:hover { background: var(--bg-2); color: var(--ink); }
+.task-menu-btn:focus-visible { opacity: 1; outline: 2px solid var(--accent); outline-offset: 1px; }
+.task-menu {
+  position: absolute; right: 0; top: 26px;
+  z-index: 40;
+  min-width: 150px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  box-shadow: 0 10px 30px rgba(0,0,0,.16);
+  padding: 5px;
+  display: flex; flex-direction: column; gap: 1px;
+}
+.task-menu button {
+  appearance: none; border: none; background: transparent;
+  text-align: left; font: inherit; font-size: 12.5px; color: var(--ink-2);
+  padding: 6px 9px; border-radius: 6px; cursor: pointer;
+}
+.task-menu button:hover { background: var(--bg-2); color: var(--ink); }
+.task-menu button.danger { color: var(--danger); }
+.task-menu-label {
+  font-size: 10px; text-transform: uppercase; letter-spacing: .07em;
+  color: var(--muted-2); padding: 6px 9px 2px;
+}
+
 /* ── Toasts ──────────────────────────────────────────────────────── */
 .toast-host {
   position: fixed; bottom: 18px; left: 18px;
