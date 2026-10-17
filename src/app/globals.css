@@ -524,6 +524,51 @@ body {
 }
 .btn-primary .kbd { background: rgba(255,255,255,.18); color: rgba(255,255,255,.85); border-color: transparent; }
 
+.sample-banner {
+  margin: 12px 16px 0;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  color: var(--ink-2);
+  font-size: 13px;
+  border-radius: var(--radius-sm);
+}
+.sample-banner a { color: var(--accent); margin: 0 6px; }
+button.nav-item {
+  width: 100%;
+  background: none;
+  border: 0;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+  text-align: left;
+}
+.empty-hint { padding: 12px 4px; color: var(--muted); font-size: 13px; }
+.auth-card {
+  max-width: 420px;
+  margin: 24px auto;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 20px;
+}
+.auth-card h1 { font-size: 22px; margin: 0 0 8px; }
+.auth-card p { color: var(--muted); font-size: 14px; margin: 0 0 16px; }
+.auth-card label { display: block; font-size: 13px; margin: 12px 0 4px; color: var(--ink-2); }
+.auth-card input {
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--bg);
+  color: var(--ink);
+  font: inherit;
+}
+.auth-card .btn-primary { margin-top: 16px; }
+.auth-error { color: var(--danger); font-size: 13px; margin-top: 10px; }
+.auth-switch { margin-top: 14px; font-size: 13px; color: var(--muted); }
+.auth-switch button { background: none; border: 0; color: var(--accent); cursor: pointer; font: inherit; }
+
 /* Section header for non-Today views */
 .view-head {
   display: flex; align-items: center; justify-content: space-between;

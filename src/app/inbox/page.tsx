@@ -1,16 +1,17 @@
 "use client";
 import Link from "next/link";
-import { useInboxCaptures } from "@/lib/db/hooks";
+import { useActorId, useInboxCaptures } from "@/lib/db/hooks";
 import { useLiveQuery } from "dexie-react-hooks";
-import { db, LOCAL_USER_ID } from "@/lib/db/schema";
+import { db } from "@/lib/db/schema";
 import { addTask, addNote } from "@/lib/db/hooks";
 
 export default function InboxPage() {
+  const actorId = useActorId();
   const inbox = useInboxCaptures() || [];
   const emails = useLiveQuery(async () => {
-    const r = await db().emails.where("userId").equals(LOCAL_USER_ID).toArray();
+    const r = await db().emails.where("userId").equals(actorId).toArray();
     return r.filter(e => !e.processed && (e.unread || e.starred)).sort((a, b) => b.receivedAt - a.receivedAt);
-  }, []) || [];
+  }, [actorId]) || [];
 
   const promoteCapToTask = async (capId: string, text: string) => {
     await addTask(text, "today");

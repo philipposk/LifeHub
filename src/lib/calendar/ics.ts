@@ -1,5 +1,5 @@
 "use client";
-import { db, uid, LOCAL_USER_ID } from "../db/schema";
+import { db, uid, getActorId } from "../db/schema";
 
 // Minimal RFC5545 parser — handles VEVENT with DTSTART/DTEND/SUMMARY/DESCRIPTION/UID.
 // Supports VALUE=DATE (all-day, treated as midnight local), TZID is approximated as local.
@@ -80,13 +80,13 @@ export function parseICS(text: string): ParsedEvent[] {
 export async function importICSText(text: string): Promise<{ added: number; skipped: number }> {
   const parsed = parseICS(text);
   let added = 0, skipped = 0;
-  const all = await db().events.where("userId").equals(LOCAL_USER_ID).toArray();
+  const all = await db().events.where("userId").equals(getActorId()).toArray();
   const byExtId = new Map(all.filter(x => x.externalId).map(x => [x.externalId!, x]));
   for (const e of parsed) {
     if (e.uid && byExtId.has(e.uid)) { skipped++; continue; }
     await db().events.add({
       id: uid(),
-      userId: LOCAL_USER_ID,
+      userId: getActorId(),
       source: "ics",
       externalId: e.uid,
       title: e.title,

@@ -1,5 +1,5 @@
 "use client";
-import { db, uid, LOCAL_USER_ID } from "../db/schema";
+import { db, uid, getActorId } from "../db/schema";
 
 export async function saveBlob(blob: Blob): Promise<string> {
   const id = uid();
@@ -19,7 +19,7 @@ export async function ingestFile(file: File) {
   const kb = Math.max(1, Math.round(file.size / 1024));
   await db().captures.add({
     id: uid(),
-    userId: LOCAL_USER_ID,
+    userId: getActorId(),
     kind: "file",
     body: `${file.name} · ${kb} KB`,
     blobRef,
@@ -50,7 +50,7 @@ export async function ingestPhoto(file: File, onProgress?: (p: number) => void) 
   const text = await ocrPhoto(file, onProgress);
   await db().captures.add({
     id: uid(),
-    userId: LOCAL_USER_ID,
+    userId: getActorId(),
     kind: "photo",
     body: text.slice(0, 280),
     blobRef,

@@ -1,5 +1,5 @@
 "use client";
-import { db, uid, LOCAL_USER_ID, AgentRunRow } from "../db/schema";
+import { db, uid, getActorId, AgentRunRow } from "../db/schema";
 
 type AIOSConfig = { baseUrl?: string; apiKey?: string };
 
@@ -35,7 +35,7 @@ export async function startAIOSWorkflow(prompt: string): Promise<{ workflowId: s
     const runId = uid();
     const row: AgentRunRow = {
       id: runId,
-      userId: LOCAL_USER_ID,
+      userId: getActorId(),
       workflowId,
       prompt,
       status: "running",

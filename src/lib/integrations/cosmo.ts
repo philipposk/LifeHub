@@ -1,5 +1,5 @@
 "use client";
-import { db, uid, LOCAL_USER_ID } from "../db/schema";
+import { db, uid, getActorId } from "../db/schema";
 import { getSupabase } from "../sync/supabase";
 
 type CosmoConfig = { baseUrl?: string; apiKey?: string };
@@ -39,7 +39,7 @@ export async function tryLinkByEmail(): Promise<
   if (!match) return { linked: false, reason: `no-cosmo-profile-for-${email}` };
 
   await db().users.put({
-    id: LOCAL_USER_ID,
+    id: getActorId(),
     name: match.name || "You",
     email,
     cosmoLinked: true,
@@ -54,7 +54,7 @@ export async function syncCosmoProfile(externalUserId: string): Promise<boolean>
     if (!profile) return false;
     await db().cosmoProfiles.put({
       id: uid(),
-      userId: LOCAL_USER_ID,
+      userId: getActorId(),
       externalId: externalUserId,
       name: profile.name || profile.username,
       email: profile.email,
@@ -67,7 +67,7 @@ export async function syncCosmoProfile(externalUserId: string): Promise<boolean>
       for (const c of contentList.slice(0, 20)) {
         await db().cosmoContent.put({
           id: uid(),
-          userId: LOCAL_USER_ID,
+          userId: getActorId(),
           externalId: String(c.id ?? c._id ?? uid()),
           title: c.title,
           body: c.body || c.text,

@@ -1,8 +1,8 @@
 "use client";
 import { useEffect, useState } from "react";
 import { useLiveQuery } from "dexie-react-hooks";
-import { db, LOCAL_USER_ID, CaptureRow } from "@/lib/db/schema";
-import { addTask, addNote } from "@/lib/db/hooks";
+import { db, CaptureRow } from "@/lib/db/schema";
+import { addTask, addNote, useActorId } from "@/lib/db/hooks";
 
 function useBlobURL(ref?: string): string | null {
   const [url, setUrl] = useState<string | null>(null);
@@ -91,10 +91,11 @@ function CaptureCard({ c }: { c: CaptureRow }) {
 }
 
 export default function CapturesPage() {
+  const actorId = useActorId();
   const all = useLiveQuery(async () => {
-    const rows = await db().captures.where("userId").equals(LOCAL_USER_ID).toArray();
+    const rows = await db().captures.where("userId").equals(actorId).toArray();
     return rows.sort((a, b) => b.createdAt - a.createdAt);
-  }, []) || [];
+  }, [actorId]) || [];
   const [filter, setFilter] = useState<"all" | "photo" | "voice" | "text" | "link">("all");
   const shown = filter === "all" ? all : all.filter(c => c.kind === filter);
 

@@ -1,9 +1,10 @@
 "use client";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useTaskCounts, useNotes, useInboxCaptures } from "@/lib/db/hooks";
+import { useActorId, useTaskCounts, useNotes, useInboxCaptures } from "@/lib/db/hooks";
 import { useLiveQuery } from "dexie-react-hooks";
-import { db, LOCAL_USER_ID } from "@/lib/db/schema";
+import { db, SAMPLE_USER_ID, isSampleActor, markSignedOutLocally, setActorId } from "@/lib/db/schema";
+import { createClient } from "@/lib/supabase/client";
 import {
   IconHome, IconCheckSquare, IconCalendar, IconNote, IconInbox,
   IconCamera, IconBookmark, IconHash, IconSettings, IconBell,
@@ -35,13 +36,15 @@ const NAV = [
 
 export function Sidebar() {
   const pathname = usePathname();
+  const actorId = useActorId();
+  const sample = isSampleActor(actorId);
   const counts = useTaskCounts();
   const notes = useNotes();
   const inbox = useInboxCaptures();
   const emailUnread = useLiveQuery(async () => {
-    const rows = await db().emails.where("userId").equals(LOCAL_USER_ID).toArray();
+    const rows = await db().emails.where("userId").equals(actorId).toArray();
     return rows.filter(e => e.unread && !e.processed).length;
-  }, []);
+  }, [actorId]);
 
   const countFor = (key?: string): string | undefined => {
     if (!key || !counts) return undefined;
@@ -84,13 +87,31 @@ export function Sidebar() {
       ))}
 
       <div className="side-bottom">
+        {sample ? (
+          <Link href="/sign-in" className={"nav-item" + (pathname === "/sign-in" ? " active" : "")}>
+            <IconSettings /><span>Sign in</span>
+          </Link>
+        ) : (
+          <button
+            className="nav-item"
+            onClick={() => {
+              markSignedOutLocally();
+              setActorId(SAMPLE_USER_ID);
+              if (process.env.NEXT_PUBLIC_SUPABASE_URL) {
+                void createClient().auth.signOut({ scope: "local" });
+              }
+            }}
+          >
+            <IconSettings /><span>Sign out</span>
+          </button>
+        )}
         <Link href="/settings" className={"nav-item" + (pathname === "/settings" ? " active" : "")}>
           <IconSettings /><span>Settings</span>
         </Link>
         <div className="quota">
-          <div>Local storage</div>
+          <div>{sample ? "Sample workspace" : "Your workspace"}</div>
           <div className="quota-bar"><i /></div>
-          <div style={{ marginTop: 4, fontSize: 10.5 }}>local · IndexedDB</div>
+          <div style={{ marginTop: 4, fontSize: 10.5 }}>{sample ? "Example people and tasks" : "Saved to your account"}</div>
         </div>
       </div>
     </aside>

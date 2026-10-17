@@ -1,17 +1,19 @@
 "use client";
 import { useEffect, useState } from "react";
 import { useLiveQuery } from "dexie-react-hooks";
-import { db, LOCAL_USER_ID } from "@/lib/db/schema";
+import { db } from "@/lib/db/schema";
+import { useActorId } from "@/lib/db/hooks";
 
 
 import { getCosmoConfig, setCosmoConfig, syncCosmoProfile, tryLinkByEmail } from "@/lib/integrations/cosmo";
 
 export default function CosmoPage() {
-  const profiles = useLiveQuery(async () => db().cosmoProfiles.where("userId").equals(LOCAL_USER_ID).toArray(), []) || [];
+  const actorId = useActorId();
+  const profiles = useLiveQuery(async () => db().cosmoProfiles.where("userId").equals(actorId).toArray(), [actorId]) || [];
   const content = useLiveQuery(async () => {
-    const r = await db().cosmoContent.where("userId").equals(LOCAL_USER_ID).toArray();
+    const r = await db().cosmoContent.where("userId").equals(actorId).toArray();
     return r.sort((a, b) => b.createdAt - a.createdAt);
-  }, []) || [];
+  }, [actorId]) || [];
 
   const [baseUrl, setBaseUrl] = useState("");
   const [apiKey, setApiKey] = useState("");
@@ -40,7 +42,7 @@ export default function CosmoPage() {
     setTimeout(() => setStatus(""), 4000);
   };
 
-  const me = useLiveQuery(async () => db().users.get(LOCAL_USER_ID), []);
+  const me = useLiveQuery(async () => db().users.get(actorId), [actorId]);
 
   return (
     <>

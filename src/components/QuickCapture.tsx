@@ -1,6 +1,6 @@
 "use client";
 import { useRef, useState } from "react";
-import { db, uid, LOCAL_USER_ID } from "@/lib/db/schema";
+import { db, uid, getActorId } from "@/lib/db/schema";
 import { addCapture, addTask, addNote } from "@/lib/db/hooks";
 import { classify } from "@/lib/capture/classify";
 import { ingestPhoto, ingestFile } from "@/lib/capture/ocr";
@@ -117,7 +117,7 @@ export function QuickCapture() {
               const meta = await r.json();
               await db().captures.add({
                 id: uid(),
-                userId: LOCAL_USER_ID,
+                userId: getActorId(),
                 kind: "link",
                 body: meta.title ? `${meta.title} — ${meta.siteName || ""}` : c.body,
                 tags: ["link", ...(c.tags || [])],

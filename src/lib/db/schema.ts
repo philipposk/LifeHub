@@ -251,7 +251,45 @@ export function db(): LifeHubDB {
   return _db;
 }
 
-export const LOCAL_USER_ID = "local-guest";
+export const SAMPLE_USER_ID = "local-guest";
+/** Sample workspace id. Live queries must call getActorId(), not this constant. */
+export const LOCAL_USER_ID = SAMPLE_USER_ID;
+
+let actorId = SAMPLE_USER_ID;
+const actorListeners = new Set<(id: string) => void>();
+
+export function getActorId() {
+  return actorId;
+}
+
+export function isSampleActor(id: string = actorId) {
+  return id === SAMPLE_USER_ID;
+}
+
+export function setActorId(id: string) {
+  if (!id || actorId === id) return;
+  actorId = id;
+  actorListeners.forEach((fn) => fn(id));
+}
+
+export function subscribeActor(fn: (id: string) => void) {
+  actorListeners.add(fn);
+  return () => {
+    actorListeners.delete(fn);
+  };
+}
+
+let signedOutLocally = false;
+export function markSignedOutLocally() {
+  signedOutLocally = true;
+}
+export function clearSignedOutLocally() {
+  signedOutLocally = false;
+}
+export function wasSignedOutLocally() {
+  return signedOutLocally;
+}
+
 export const uid = () =>
   (typeof crypto !== "undefined" && crypto.randomUUID
     ? crypto.randomUUID()

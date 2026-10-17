@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { useLiveQuery } from "dexie-react-hooks";
-import { db, LOCAL_USER_ID } from "@/lib/db/schema";
+import { db } from "@/lib/db/schema";
 import {
   getGmailConfig, setGmailConfig, getGmailTokens, disconnectGmail,
   buildGmailAuthURL, syncGmailUnread,
@@ -9,14 +9,15 @@ import {
   getAICfg, setAICfg,
   GMAIL_DEFAULT_REDIRECT, summarizeEmail,
 } from "@/lib/integrations/email";
-import { addTask, addNote } from "@/lib/db/hooks";
+import { addTask, addNote, useActorId } from "@/lib/db/hooks";
 
 export default function EmailPage() {
+  const actorId = useActorId();
   const emails = useLiveQuery(async () => {
-    const r = await db().emails.where("userId").equals(LOCAL_USER_ID).toArray();
+    const r = await db().emails.where("userId").equals(actorId).toArray();
     return r.sort((a, b) => b.receivedAt - a.receivedAt);
-  }, []) || [];
-  const accounts = useLiveQuery(async () => db().emailAccounts.where("userId").equals(LOCAL_USER_ID).toArray(), []) || [];
+  }, [actorId]) || [];
+  const accounts = useLiveQuery(async () => db().emailAccounts.where("userId").equals(actorId).toArray(), [actorId]) || [];
 
   const [clientId, setClientId] = useState("");
   const [clientSecret, setClientSecret] = useState("");

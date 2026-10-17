@@ -1,9 +1,9 @@
 "use client";
-import { useTasks, useTodayEvents, useHabits, useNotes, useInboxCaptures, useStreak, useAgentRuns, useMCPCatalog } from "@/lib/db/hooks";
+import { useActorId, useTasks, useTodayEvents, useHabits, useNotes, useInboxCaptures, useStreak, useAgentRuns, useMCPCatalog } from "@/lib/db/hooks";
 import { pollAIOSWorkflow } from "@/lib/integrations/aios";
 import { summarizeUnreadDigest } from "@/lib/integrations/email";
 import { useLiveQuery } from "dexie-react-hooks";
-import { db, LOCAL_USER_ID } from "@/lib/db/schema";
+import { db, isSampleActor } from "@/lib/db/schema";
 import { useEffect, useMemo, useState } from "react";
 import { localDateKey } from "@/lib/date";
 import { TaskRow } from "@/components/TaskRow";
@@ -25,6 +25,7 @@ const TODAY_LABEL = () => {
 };
 
 export default function TodayPage() {
+  const actorId = useActorId();
   const tasks = useTasks({ section: "today" }) || [];
   const events = useTodayEvents() || [];
   const habitsData = useHabits();
@@ -57,9 +58,9 @@ export default function TodayPage() {
   }, [runningRuns.length]);
 
   const unreadEmails = useLiveQuery(async () => {
-    const r = await db().emails.where("userId").equals(LOCAL_USER_ID).toArray();
+    const r = await db().emails.where("userId").equals(actorId).toArray();
     return r.filter(e => e.unread && !e.processed).sort((a, b) => b.receivedAt - a.receivedAt);
-  }, []) || [];
+  }, [actorId]) || [];
   const [digest, setDigest] = useState<string | null>(null);
   useEffect(() => {
     let cancelled = false;
@@ -75,7 +76,7 @@ export default function TodayPage() {
     <>
       <div className="page-head">
         <div>
-          <div className="hello">Good day, <em>You</em>.</div>
+          <div className="hello">Good day, <em>{isSampleActor(actorId) ? "sample" : "you"}</em>.</div>
           <div className="date-strip" style={{ marginTop: 10 }}>
             {TODAY_LABEL()} <span className="dot" />
             <span className="stat-pill"><span className="dot" /><b>{done}</b> of {tasks.length} done</span>
@@ -99,6 +100,9 @@ export default function TodayPage() {
               <Link href="/tasks" className="more">View all →</Link>
             </div>
             <div className="card-body">
+              {tasks.length === 0 && !isSampleActor(actorId) && (
+                <div className="empty-hint">Nothing here yet. Add a task when you are ready.</div>
+              )}
               {focus.map(t => <TaskRow key={t.id} t={t} />)}
               {rest.slice(0, 3).map(t => <TaskRow key={t.id} t={t} />)}
               <Link href="/tasks" className="add-task">

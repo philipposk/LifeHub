@@ -1,5 +1,5 @@
 "use client";
-import { db, SyncQueueRow } from "../db/schema";
+import { db, SAMPLE_USER_ID, SyncQueueRow } from "../db/schema";
 import { getSupabase } from "./supabase";
 
 const TABLE = "lifehub_records";
@@ -31,7 +31,15 @@ export async function flushSyncQueue(): Promise<FlushResult> {
     return r;
   }
 
-  const pending = await db().syncQueue.orderBy("createdAt").limit(MAX_PER_TICK).toArray();
+  const queued = await db().syncQueue.orderBy("createdAt").limit(MAX_PER_TICK).toArray();
+  const pending = [];
+  for (const row of queued) {
+    if (row.payload?.userId === SAMPLE_USER_ID) {
+      await db().syncQueue.delete(row.id);
+      continue;
+    }
+    pending.push(row);
+  }
   if (pending.length === 0) {
     const r: FlushResult = { ok: true, flushed: 0, remaining: 0 };
     await recordLastFlush(r);

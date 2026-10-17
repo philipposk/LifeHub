@@ -1,5 +1,5 @@
 "use client";
-import { db, uid, LOCAL_USER_ID, EmailRow, EmailAccountRow } from "../db/schema";
+import { db, uid, getActorId, EmailRow, EmailAccountRow } from "../db/schema";
 
 type GmailConfig = { clientId?: string; clientSecret?: string; redirectUri?: string };
 type GmailTokens = { accessToken: string; refreshToken: string; expiresAt: number; email: string };
@@ -76,7 +76,7 @@ export async function exchangeGmailCode(code: string): Promise<boolean> {
   // upsert account row
   await db().emailAccounts.put({
     id: "gmail:" + (j.email || "primary"),
-    userId: LOCAL_USER_ID,
+    userId: getActorId(),
     source: "gmail",
     address: j.email || "primary",
     addedAt: Date.now(),
@@ -133,7 +133,7 @@ export async function syncGmailUnread(limit = 25): Promise<{ added: number; tota
     if (existing.has(m.id)) continue;
     const row: EmailRow = {
       id: uid(),
-      userId: LOCAL_USER_ID,
+      userId: getActorId(),
       accountId,
       source: "gmail",
       externalId: m.id,
@@ -190,7 +190,7 @@ export async function summarizeEmail(emailId: string): Promise<string | null> {
 }
 
 export async function summarizeUnreadDigest(limit = 5): Promise<string | null> {
-  const rows = (await db().emails.where("userId").equals(LOCAL_USER_ID).toArray())
+  const rows = (await db().emails.where("userId").equals(getActorId()).toArray())
     .filter(e => e.unread).sort((a, b) => b.receivedAt - a.receivedAt).slice(0, limit);
   if (rows.length === 0) return null;
   const oa = (await db().settings.get("openai"))?.value as { key?: string } | undefined;

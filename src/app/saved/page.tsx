@@ -1,12 +1,14 @@
 "use client";
 import { useLiveQuery } from "dexie-react-hooks";
-import { db, LOCAL_USER_ID } from "@/lib/db/schema";
+import { db } from "@/lib/db/schema";
+import { useActorId } from "@/lib/db/hooks";
 
 export default function SavedPage() {
+  const actorId = useActorId();
   const links = useLiveQuery(async () => {
-    const rows = await db().captures.where("userId").equals(LOCAL_USER_ID).toArray();
+    const rows = await db().captures.where("userId").equals(actorId).toArray();
     return rows.filter(r => r.kind === "link").sort((a, b) => b.createdAt - a.createdAt);
-  }, []) || [];
+  }, [actorId]) || [];
 
   return (
     <>

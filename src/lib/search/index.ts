@@ -1,6 +1,6 @@
 "use client";
 import Fuse from "fuse.js";
-import { db, LOCAL_USER_ID } from "../db/schema";
+import { db, getActorId } from "../db/schema";
 
 export type SearchResult = {
   type: "task" | "note" | "capture";
@@ -13,9 +13,9 @@ export type SearchResult = {
 export async function searchAll(query: string, limit = 20): Promise<SearchResult[]> {
   if (!query.trim()) return [];
   const [tasks, notes, captures] = await Promise.all([
-    db().tasks.where("userId").equals(LOCAL_USER_ID).toArray(),
-    db().notes.where("userId").equals(LOCAL_USER_ID).toArray(),
-    db().captures.where("userId").equals(LOCAL_USER_ID).toArray(),
+    db().tasks.where("userId").equals(getActorId()).toArray(),
+    db().notes.where("userId").equals(getActorId()).toArray(),
+    db().captures.where("userId").equals(getActorId()).toArray(),
   ]);
 
   const items: SearchResult[] = [

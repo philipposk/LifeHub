@@ -1,5 +1,5 @@
 "use client";
-import { db, uid, LOCAL_USER_ID } from "../db/schema";
+import { db, uid, getActorId } from "../db/schema";
 import { saveBlob } from "./ocr";
 
 export type VoiceSession = {
@@ -71,7 +71,7 @@ export async function ingestVoice(blob: Blob, fallbackTranscript: string) {
   if (whisper && whisper.length > transcript.length) transcript = whisper;
   await db().captures.add({
     id: uid(),
-    userId: LOCAL_USER_ID,
+    userId: getActorId(),
     kind: "voice",
     body: transcript.slice(0, 280) || "(voice memo)",
     blobRef,

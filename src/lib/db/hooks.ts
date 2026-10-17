@@ -1,11 +1,19 @@
 "use client";
+import { useEffect, useState } from "react";
 import { useLiveQuery } from "dexie-react-hooks";
-import { db, LOCAL_USER_ID, uid, TaskRow, NoteRow, HabitRow, HabitLogRow, EventRow, CaptureRow, AreaRow } from "./schema";
+import { db, getActorId, isSampleActor, subscribeActor, uid, TaskRow, NoteRow, HabitRow, HabitLogRow, EventRow, CaptureRow, AreaRow } from "./schema";
 import { localDateKey } from "../date";
+
+export function useActorId() {
+  const [id, setId] = useState(getActorId);
+  useEffect(() => subscribeActor(setId), []);
+  return id;
+}
 
 export type SyncOp = "upsert" | "delete";
 
 export async function enqueue(table: string, recordId: string, op: SyncOp, payload: any) {
+  if (isSampleActor()) return;
   await db().syncQueue.add({
     id: uid(),
     table,
@@ -18,53 +26,59 @@ export async function enqueue(table: string, recordId: string, op: SyncOp, paylo
 }
 
 export function useTasks(filter?: { done?: boolean; section?: string; focus?: boolean }) {
+  const actorId = useActorId();
   return useLiveQuery(async () => {
-    let coll = db().tasks.where("userId").equals(LOCAL_USER_ID);
+    let coll = db().tasks.where("userId").equals(actorId);
     let rows = await coll.toArray();
     if (filter?.done !== undefined) rows = rows.filter(r => r.done === filter.done);
     if (filter?.section) rows = rows.filter(r => r.section === filter.section);
     if (filter?.focus !== undefined) rows = rows.filter(r => r.focus === filter.focus);
     return rows.sort((a, b) => a.createdAt - b.createdAt);
-  }, [filter?.done, filter?.section, filter?.focus]);
+  }, [actorId, filter?.done, filter?.section, filter?.focus]);
 }
 
 export function useTaskCounts() {
+  const actorId = useActorId();
   return useLiveQuery(async () => {
-    const all = await db().tasks.where("userId").equals(LOCAL_USER_ID).toArray();
+    const all = await db().tasks.where("userId").equals(actorId).toArray();
     return {
       total: all.length,
       open: all.filter(t => !t.done).length,
       done: all.filter(t => t.done).length,
       today: all.filter(t => t.section === "today").length,
     };
-  }, []);
+  }, [actorId]);
 }
 
 export function useNotes(tag?: string) {
+  const actorId = useActorId();
   return useLiveQuery(async () => {
-    let rows = await db().notes.where("userId").equals(LOCAL_USER_ID).toArray();
+    let rows = await db().notes.where("userId").equals(actorId).toArray();
     if (tag && tag !== "all") rows = rows.filter(r => r.tag === tag);
     return rows.sort((a, b) => b.updatedAt - a.updatedAt);
-  }, [tag]);
+  }, [actorId, tag]);
 }
 
 export function useHabits() {
+  const actorId = useActorId();
   return useLiveQuery(async () => {
-    const habits = await db().habits.where("userId").equals(LOCAL_USER_ID).toArray();
+    const habits = await db().habits.where("userId").equals(actorId).toArray();
     const logsByHabit: Record<string, HabitLogRow[]> = {};
     for (const h of habits) {
       logsByHabit[h.id] = (await db().habitLogs.where("habitId").equals(h.id).toArray())
         .sort((a, b) => a.date.localeCompare(b.date));
     }
     return { habits, logsByHabit };
-  }, []);
+  }, [actorId]);
 }
 
 export function useStreak() {
+  const actorId = useActorId();
   return useLiveQuery(async () => {
-    const habits = await db().habits.where("userId").equals(LOCAL_USER_ID).toArray();
+    const habits = await db().habits.where("userId").equals(actorId).toArray();
     if (habits.length === 0) return 0;
-    const logs = await db().habitLogs.toArray();
+    const habitIds = new Set(habits.map(h => h.id));
+    const logs = (await db().habitLogs.toArray()).filter(l => habitIds.has(l.habitId));
     const byDate: Record<string, Record<string, number>> = {};
     for (const l of logs) {
       byDate[l.date] = byDate[l.date] || {};
@@ -82,20 +96,22 @@ export function useStreak() {
       d.setDate(d.getDate() - 1);
     }
     return streak;
-  }, []);
+  }, [actorId]);
 }
 
 export function useAreas() {
+  const actorId = useActorId();
   return useLiveQuery(async () =>
-    db().areas.where("userId").equals(LOCAL_USER_ID).toArray()
-  , []);
+    db().areas.where("userId").equals(actorId).toArray()
+  , [actorId]);
 }
 
 export function useAgentRuns() {
+  const actorId = useActorId();
   return useLiveQuery(async () => {
-    const rows = await db().agentRuns.where("userId").equals(LOCAL_USER_ID).toArray();
+    const rows = await db().agentRuns.where("userId").equals(actorId).toArray();
     return rows.sort((a, b) => b.createdAt - a.createdAt);
-  }, []);
+  }, [actorId]);
 }
 
 export function useMCPCatalog() {
@@ -103,30 +119,33 @@ export function useMCPCatalog() {
 }
 
 export function useEventsRange(startMs: number, endMs: number) {
+  const actorId = useActorId();
   return useLiveQuery(async () => {
     const rows = await db().events
       .where("start").between(startMs, endMs, true, true)
       .toArray();
-    return rows.sort((a, b) => a.start - b.start);
-  }, [startMs, endMs]);
+    return rows.filter(r => r.userId === actorId).sort((a, b) => a.start - b.start);
+  }, [actorId, startMs, endMs]);
 }
 
 export function useTodayEvents() {
+  const actorId = useActorId();
   return useLiveQuery(async () => {
     const start = new Date(); start.setHours(0, 0, 0, 0);
     const end = new Date();   end.setHours(23, 59, 59, 999);
     const rows = await db().events
       .where("start").between(start.getTime(), end.getTime(), true, true)
       .toArray();
-    return rows.sort((a, b) => a.start - b.start);
-  }, []);
+    return rows.filter(r => r.userId === actorId).sort((a, b) => a.start - b.start);
+  }, [actorId]);
 }
 
 export function useInboxCaptures() {
+  const actorId = useActorId();
   return useLiveQuery(async () => {
-    const rows = await db().captures.where("userId").equals(LOCAL_USER_ID).toArray();
+    const rows = await db().captures.where("userId").equals(actorId).toArray();
     return rows.filter(r => !r.processed).sort((a, b) => b.createdAt - a.createdAt);
-  }, []);
+  }, [actorId]);
 }
 
 export function useTweak<T = any>(key: string, fallback: T): T {
@@ -159,7 +178,7 @@ export async function deleteTask(id: string) {
 export async function addTask(text: string, section: string = "today", chipCls?: string, chipLabel?: string) {
   const row: TaskRow = {
     id: uid(),
-    userId: LOCAL_USER_ID,
+    userId: getActorId(),
     text,
     chipCls,
     chipLabel,
@@ -177,7 +196,7 @@ export async function addTask(text: string, section: string = "today", chipCls?:
 export async function addNote(title: string, body: string, tag?: string) {
   const row: NoteRow = {
     id: uid(),
-    userId: LOCAL_USER_ID,
+    userId: getActorId(),
     title,
     body,
     tag,
@@ -206,7 +225,7 @@ export async function deleteNote(id: string) {
 export async function addCapture(body: string, kind: CaptureRow["kind"] = "text", tags: string[] = []) {
   const row: CaptureRow = {
     id: uid(),
-    userId: LOCAL_USER_ID,
+    userId: getActorId(),
     kind,
     body,
     tags,

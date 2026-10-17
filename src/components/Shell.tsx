@@ -1,8 +1,12 @@
 "use client";
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { useRouter, usePathname } from "next/navigation";
 import { ensureSeeded } from "@/lib/db/seed";
 import { startSyncLoop } from "@/lib/sync/adapter";
+import { pullActorRecords } from "@/lib/sync/pull";
+import { createClient } from "@/lib/supabase/client";
+import { clearSignedOutLocally, db, isSampleActor, SAMPLE_USER_ID, setActorId, subscribeActor, wasSignedOutLocally } from "@/lib/db/schema";
 import { Sidebar } from "./Sidebar";
 import { Topbar } from "./Topbar";
 import { TweaksPanel } from "./TweaksPanel";
@@ -23,17 +27,70 @@ export function Shell({ children }: { children: React.ReactNode }) {
   const [paletteOpen, setPaletteOpen] = useState(false);
   const [navOpen, setNavOpen] = useState(false);
   const [helpOpen, setHelpOpen] = useState(false);
+  const [sample, setSample] = useState(true);
+
+  useEffect(() => {
+    if (!ready) return;
+    setSample(isSampleActor());
+    return subscribeActor((id) => setSample(isSampleActor(id)));
+  }, [ready]);
 
   // Close the mobile drawer whenever the route changes.
   useEffect(() => { setNavOpen(false); }, [pathname]);
 
   useEffect(() => {
-    ensureSeeded()
-      .catch((e) => console.error("[lifehub] seed error", e))
-      .finally(() => {
+    let stop = () => {};
+    let cancelled = false;
+    (async () => {
+      try {
+        await ensureSeeded();
+      } catch (e) {
+        console.error("[lifehub] seed error", e);
+      }
+      if (cancelled) return;
+      if (process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
+        const supabase = createClient();
+        const { data: { user } } = await supabase.auth.getUser();
+        if (cancelled) return;
+        if (user && !wasSignedOutLocally()) {
+          setActorId(user.id);
+          const existing = await db().users.get(user.id);
+          if (!existing) {
+            await db().users.put({
+              id: user.id,
+              name: user.email?.split("@")[0] || "You",
+              email: user.email ?? undefined,
+              createdAt: Date.now(),
+            });
+          }
+          await pullActorRecords(user.id);
+        } else {
+          setActorId(SAMPLE_USER_ID);
+        }
+        const { data } = supabase.auth.onAuthStateChange((event, session) => {
+          if (event === "SIGNED_IN") clearSignedOutLocally();
+          if (wasSignedOutLocally() && event !== "SIGNED_IN") {
+            setActorId(SAMPLE_USER_ID);
+            return;
+          }
+          if (session?.user) {
+            setActorId(session.user.id);
+            void pullActorRecords(session.user.id);
+          } else {
+            setActorId(SAMPLE_USER_ID);
+          }
+        });
+        stop = () => data.subscription.unsubscribe();
+      }
+      if (!cancelled) {
         setReady(true);
         startSyncLoop();
-      });
+      }
+    })();
+    return () => {
+      cancelled = true;
+      stop();
+    };
   }, []);
 
   useEffect(() => {
@@ -74,6 +131,13 @@ export function Shell({ children }: { children: React.ReactNode }) {
         {navOpen && <div className="nav-backdrop" onClick={() => setNavOpen(false)} />}
         <div className="main">
           <Topbar onOpenSearch={() => setPaletteOpen(true)} onToggleNav={() => setNavOpen(o => !o)} />
+          {sample && (
+            <div className="sample-banner">
+              Sample workspace. The people and tasks on this screen are examples, not your data.
+              <Link href="/sign-in">Sign in</Link>
+              for an empty workspace of your own.
+            </div>
+          )}
           <div className="content">{children}</div>
         </div>
         <TweaksPanel />
