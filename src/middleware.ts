@@ -1,6 +1,7 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextRequest, NextResponse } from "next/server";
 import { sharedCookieOptions } from "./lib/supabase/cookies";
+import { trackAppAccess } from "./app-access";
 
 export async function middleware(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request });
@@ -32,7 +33,8 @@ export async function middleware(request: NextRequest) {
   );
 
   // Refresh session — must await to avoid stale session bugs
-  await supabase.auth.getUser();
+  const { data: { user: __u } } = await supabase.auth.getUser();
+  await trackAppAccess(supabase, __u, request, supabaseResponse, "lifehub");
 
   return supabaseResponse;
 }
