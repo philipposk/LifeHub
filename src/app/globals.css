@@ -568,6 +568,27 @@ button.nav-item {
 .auth-error { color: var(--danger); font-size: 13px; margin-top: 10px; }
 .auth-switch { margin-top: 14px; font-size: 13px; color: var(--muted); }
 .auth-switch button { background: none; border: 0; color: var(--accent); cursor: pointer; font: inherit; }
+.auth-switch button:disabled { color: var(--muted); cursor: default; }
+.auth-switch-row { display: flex; justify-content: space-between; gap: 12px; }
+.auth-card .auth-note { color: var(--muted); font-size: 12px; margin: 14px 0 0; }
+.auth-card .btn-primary, .auth-card .btn-secondary {
+  width: 100%; justify-content: center; padding: 9px 14px; font-size: 13px;
+}
+.auth-card .btn-primary:disabled, .auth-card .btn-secondary:disabled { opacity: .6; cursor: default; }
+a.btn-primary { text-decoration: none; }
+.btn-secondary {
+  display: inline-flex; align-items: center; gap: 6px;
+  border: 1px solid var(--line); border-radius: 7px;
+  background: var(--surface); color: var(--ink);
+  font: 500 12px "Geist", sans-serif;
+  cursor: pointer;
+}
+.btn-secondary:hover { background: var(--bg-2); }
+.auth-divider {
+  display: flex; align-items: center; gap: 10px; margin: 16px 0 4px;
+  color: var(--muted); font-size: 12px;
+}
+.auth-divider::before, .auth-divider::after { content: ""; flex: 1; height: 1px; background: var(--line); }
 
 /* Section header for non-Today views */
 .view-head {
