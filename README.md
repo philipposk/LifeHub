@@ -24,4 +24,6 @@ npm install
 npm run dev   # http://localhost:5175
 ```
 
+Sign-in is passwordless: "Continue with Google", or "Email me a sign-in link" (the email carries a link and a one-time code). It uses the shared 6x7 login (Supabase auth, `sb-6x7-auth` cookie on `.6x7.gr`), so an account made with a password before keeps working with the emailed link (same email, same account). Routes: `/auth/callback` (Google and link return), `/auth/confirm` + `POST /auth/verify` (token-hash links; nothing happens until the button is pressed). `npm test` runs the open-redirect guard tests.
+
 First load seeds a `local-guest` user with sample data. Optional setup (Gmail OAuth, OpenAI key, calendar import, sync) is documented in `.env.local.example`. The full mail-reader companion app is `Postbox`. MIT licensed.
