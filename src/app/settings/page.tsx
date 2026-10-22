@@ -9,10 +9,12 @@ import { setAppMakerConfig } from "@/lib/integrations/appmaker";
 import { setCosmoConfig } from "@/lib/integrations/cosmo";
 import { setABConfig, refreshMCPCatalog } from "@/lib/integrations/appblueprints";
 import { importICSText } from "@/lib/calendar/ics";
+import { useTweaksLive, ModeSegments, modeOf } from "@/lib/tweaks";
 
 export default function SettingsPage() {
   const supa = useLiveQuery(async () => (await db().settings.get("supabase"))?.value as { url?: string; anonKey?: string } | undefined, []);
   const tweaks = useLiveQuery(async () => (await db().settings.get("tweaks"))?.value, []);
+  const [look, setLook] = useTweaksLive();
   const openai = useLiveQuery(async () => (await db().settings.get("openai"))?.value as { key?: string } | undefined, []);
   const aios = useLiveQuery(async () => (await db().settings.get("aios"))?.value as { baseUrl?: string; apiKey?: string } | undefined, []);
   const appmaker = useLiveQuery(async () => (await db().settings.get("appmaker"))?.value as { baseUrl?: string; apiKey?: string } | undefined, []);
@@ -97,12 +99,17 @@ export default function SettingsPage() {
       <div className="settings-section">
         <h3>Appearance</h3>
         <div className="settings-row">
-          <label>Accent / dark / density</label>
+          <label>Theme</label>
+          <ModeSegments mode={modeOf(look)} onChange={(m) => setLook("mode", m)} />
+          <span className="settings-hint">Auto follows your phone or computer.</span>
+        </div>
+        <div className="settings-row">
+          <label>Accent / density</label>
           <span className="settings-hint">Use the floating Tweaks button (bottom-right) to change these live.</span>
         </div>
         <div className="settings-row">
           <label>Current</label>
-          <span className="settings-hint">{tweaks ? `accent ${tweaks.accent} · ${tweaks.dark ? "dark" : "light"} · ${tweaks.density}` : "default"}</span>
+          <span className="settings-hint">{tweaks ? `accent ${tweaks.accent} · ${modeOf(tweaks)} · ${tweaks.density}` : "default"}</span>
         </div>
       </div>
 

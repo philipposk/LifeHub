@@ -1,6 +1,6 @@
 "use client";
 import { useState } from "react";
-import { useTweaksLive, useApplyTweaks } from "@/lib/tweaks";
+import { useTweaksLive, useApplyTweaks, ModeSegments, modeOf } from "@/lib/tweaks";
 import { IconSliders } from "./icons";
 
 const ACCENT_OPTIONS = ["#5C6B4A", "#8C6F4A", "#4A6FA5", "#9A4F5C", "#3D3D3D"];
@@ -33,8 +33,8 @@ export function TweaksPanel() {
             </div>
           </div>
           <div className="tweak-row">
-            <span>Dark mode</span>
-            <div className={"toggle" + (t.dark ? " on" : "")} onClick={() => setTweak("dark", !t.dark)} />
+            <span>Mode</span>
+            <ModeSegments mode={modeOf(t)} onChange={(m) => setTweak("mode", m)} />
           </div>
 
           <div className="tweak-section">Layout</div>

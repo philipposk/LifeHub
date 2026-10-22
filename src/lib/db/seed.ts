@@ -165,7 +165,7 @@ export async function ensureSeeded() {
       }
 
       await d.settings.put({ key: "seeded", value: true });
-      await d.settings.put({ key: "tweaks", value: { accent: "#5C6B4A", density: "regular", dark: true } });
+      await d.settings.put({ key: "tweaks", value: { accent: "#5C6B4A", density: "regular", dark: true, mode: "auto" } });
     }
   );
 }
