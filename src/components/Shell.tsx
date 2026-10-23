@@ -116,6 +116,10 @@ export function Shell({ children }: { children: React.ReactNode }) {
     return () => window.removeEventListener("keydown", onKey);
   }, [router]);
 
+  // The home page is the public landing: render it straight away (server
+  // HTML that search engines can read), without the app chrome or loader.
+  if (pathname === "/") return <>{children}</>;
+
   if (!ready) {
     return (
       <div style={{ display: "grid", placeItems: "center", height: "100vh", color: "var(--muted)" }}>
