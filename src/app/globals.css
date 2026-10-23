@@ -12,7 +12,7 @@
   --ink:       #1A1714;
   --ink-2:     #3D372F;
   --muted:     #6B6355; /* 5.2:1+ on bg/bg-2 (was 3.6) */
-  --muted-2:   #B8B0A1;
+  --muted-2:   #736957; /* 4.7:1+ on bg/bg-2 (was 2.0) */
   --accent:    #5C6B4A;
   --accent-soft: color-mix(in oklab, var(--accent) 14%, transparent);
   --accent-ink:  color-mix(in oklab, var(--accent) 80%, #000);
@@ -40,7 +40,7 @@
   --ink:       #F0EBDF;
   --ink-2:     #C9C2B0;
   --muted:     #8F887A; /* 4.8:1+ on bg/surface (was 4.4) */
-  --muted-2:   #5C5648;
+  --muted-2:   #8E856F; /* 4.6:1+ on bg/surface (was 2.4) */
 }
 
 * { box-sizing: border-box; }
@@ -355,9 +355,9 @@ body {
   color: var(--ink-2);
   border: 1px solid var(--line-2);
 }
-.chip.work    { color: #4A6FA5; background: color-mix(in oklab, #4A6FA5 8%, var(--bg)); border-color: color-mix(in oklab, #4A6FA5 15%, var(--line)); }
-.chip.home    { color: #A56B4A; background: color-mix(in oklab, #A56B4A 8%, var(--bg)); border-color: color-mix(in oklab, #A56B4A 15%, var(--line)); }
-.chip.health  { color: #5C8A5C; background: color-mix(in oklab, #5C8A5C 8%, var(--bg)); border-color: color-mix(in oklab, #5C8A5C 15%, var(--line)); }
+.chip.work    { color: #486BA0; background: color-mix(in oklab, #4A6FA5 8%, var(--bg)); border-color: color-mix(in oklab, #4A6FA5 15%, var(--line)); }
+.chip.home    { color: #925E41; background: color-mix(in oklab, #A56B4A 8%, var(--bg)); border-color: color-mix(in oklab, #A56B4A 15%, var(--line)); }
+.chip.health  { color: #4D734D; background: color-mix(in oklab, #5C8A5C 8%, var(--bg)); border-color: color-mix(in oklab, #5C8A5C 15%, var(--line)); }
 .chip.focus   { color: var(--accent-ink); background: var(--accent-soft); border-color: transparent; }
 .due-soon { color: var(--danger); }
 
@@ -382,22 +382,26 @@ body {
   color: var(--ink-2);
 }
 .habit-name .ico svg { width: 12px; height: 12px; }
-.habit-cells { display: flex; gap: 3px; }
+.habit-cells { display: flex; gap: 0; }
+/* 24px hit area (WCAG 2.5.8), 14px visual square drawn by ::before. */
 .habit-cell {
-  width: 14px; height: 14px;
-  border-radius: 3px;
-  background: var(--line);
+  --cell: var(--line);
+  width: 24px; height: 24px;
+  border-radius: 6px;
+  background: transparent;
   cursor: pointer;
   appearance: none;
   border: none;
   padding: 0;
   display: block;
+  position: relative;
 }
-.habit-cell:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
-.habit-cell.f1 { background: color-mix(in oklab, var(--accent) 30%, var(--line)); }
-.habit-cell.f2 { background: color-mix(in oklab, var(--accent) 60%, var(--line)); }
-.habit-cell.f3 { background: var(--accent); }
-.habit-cell.today { outline: 2px solid var(--accent); outline-offset: 1px; }
+.habit-cell::before { content: ""; position: absolute; inset: 5px; border-radius: 3px; background: var(--cell); }
+.habit-cell:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+.habit-cell.f1 { --cell: color-mix(in oklab, var(--accent) 30%, var(--line)); }
+.habit-cell.f2 { --cell: color-mix(in oklab, var(--accent) 60%, var(--line)); }
+.habit-cell.f3 { --cell: var(--accent); }
+.habit-cell.today { outline: 2px solid var(--accent); outline-offset: -2px; }
 
 /* Calendar peek */
 .cal-row {
@@ -536,7 +540,7 @@ body {
   font-size: 13px;
   border-radius: var(--radius-sm);
 }
-.sample-banner a { color: var(--accent-text); margin: 0 6px; }
+.sample-banner a { color: var(--accent-text); margin: 0 6px; text-decoration: underline; text-underline-offset: 2px; }
 button.nav-item {
   width: 100%;
   background: none;
