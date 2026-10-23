@@ -3,6 +3,7 @@
 @tailwind utilities;
 
 :root {
+  --accent-text: var(--accent);
   --bg:        #FAF8F4;
   --bg-2:      #F2EFE8;
   --surface:   #FFFFFF;
@@ -10,7 +11,7 @@
   --line-2:    #EFEBE0;
   --ink:       #1A1714;
   --ink-2:     #3D372F;
-  --muted:     #8B8273;
+  --muted:     #6B6355; /* 5.2:1+ on bg/bg-2 (was 3.6) */
   --muted-2:   #B8B0A1;
   --accent:    #5C6B4A;
   --accent-soft: color-mix(in oklab, var(--accent) 14%, transparent);
@@ -29,6 +30,8 @@
   --pad: 20px; --pad-lg: 28px; --row-h: 46px;
 }
 [data-theme="dark"] {
+  /* The accent (#5C6B4A by default, user-pickable) is too dark for text on dark surfaces. */
+  --accent-text: color-mix(in srgb, var(--accent) 45%, #F0EBDF);
   --bg:        #15140F;
   --bg-2:      #1C1A14;
   --surface:   #1F1D17;
@@ -36,7 +39,7 @@
   --line-2:    #25221B;
   --ink:       #F0EBDF;
   --ink-2:     #C9C2B0;
-  --muted:     #837C6C;
+  --muted:     #8F887A; /* 4.8:1+ on bg/surface (was 4.4) */
   --muted-2:   #5C5648;
 }
 
@@ -533,7 +536,7 @@ body {
   font-size: 13px;
   border-radius: var(--radius-sm);
 }
-.sample-banner a { color: var(--accent); margin: 0 6px; }
+.sample-banner a { color: var(--accent-text); margin: 0 6px; }
 button.nav-item {
   width: 100%;
   background: none;
@@ -567,7 +570,7 @@ button.nav-item {
 .auth-card .btn-primary { margin-top: 16px; }
 .auth-error { color: var(--danger); font-size: 13px; margin-top: 10px; }
 .auth-switch { margin-top: 14px; font-size: 13px; color: var(--muted); }
-.auth-switch button { background: none; border: 0; color: var(--accent); cursor: pointer; font: inherit; }
+.auth-switch button { background: none; border: 0; color: var(--accent-text); cursor: pointer; font: inherit; }
 
 /* Section header for non-Today views */
 .view-head {
