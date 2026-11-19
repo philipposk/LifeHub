@@ -1,6 +1,6 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextRequest, NextResponse } from "next/server";
-import { sharedCookieOptions } from "./lib/supabase/cookies";
+import { cookieOptionsForHost, hostFromHeaders } from "./lib/supabase/cookies";
 import { trackAppAccess } from "./app-access";
 
 export async function middleware(request: NextRequest) {
@@ -15,7 +15,7 @@ export async function middleware(request: NextRequest) {
     process.env.NEXT_PUBLIC_SUPABASE_URL,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
-      cookieOptions: sharedCookieOptions,
+      cookieOptions: cookieOptionsForHost(hostFromHeaders(request.headers)),
       cookies: {
         getAll() { return request.cookies.getAll(); },
         setAll(cookiesToSet) {
@@ -24,7 +24,7 @@ export async function middleware(request: NextRequest) {
           cookiesToSet.forEach(({ name, value, options }) =>
             supabaseResponse.cookies.set(name, value, {
               ...options,
-              ...(isProd ? { domain: ".6x7.gr", sameSite: "lax", secure: true, path: "/" } : {}),
+              ...(isProd ? { domain: cookieOptionsForHost(hostFromHeaders(request.headers)).domain, sameSite: "lax", secure: true, path: "/" } : {}),
             })
           );
         },
