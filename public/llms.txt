@@ -1,0 +1,6 @@
+# LifeHub
+
+> A personal dashboard that keeps your tasks, notes, captures, habits and calendar in one calm place. Works offline and syncs when you sign in.
+
+- [LifeHub](https://lifehub.6x7.gr/)
+- Made by [6x7](https://6x7.gr/). [All 6x7 apps](https://portfolio.6x7.gr/)
